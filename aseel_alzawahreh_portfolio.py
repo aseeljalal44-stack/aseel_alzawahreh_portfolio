@@ -1,259 +1,273 @@
 import streamlit as st
-import base64
-import requests
-from PIL import Image
-import io
+import pandas as pd
 
-# إعدادات الصفحة
+# ============ إعدادات الصفحة ============
 st.set_page_config(
-    page_title="أسيل الزواهرة | Aseel Alzawahreh",
+    page_title="Aseel Alzawahreh | Portfolio",
     page_icon="🚀",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# إدارة الحالة
+# ============ إدارة الحالة ============
 if 'language' not in st.session_state:
     st.session_state.language = 'ar'
 if 'theme' not in st.session_state:
     st.session_state.theme = 'light'
 
-# بيانات ثنائية اللغة
-content = {
+# ============ بيانات ثنائية اللغة ============
+CONTENT = {
     'ar': {
-        # التنقل
-        'nav_home': 'الرئيسية',
-        'nav_about': 'عنّي',
-        'nav_skills': 'المهارات',
-        'nav_projects': 'المشاريع',
-        'nav_contact': 'تواصل',
-        
         # الهيدر
         'title': 'أسيل الزواهرة',
-        'subtitle': 'مطور لوحات تحكم تفاعلية',
-        'tagline': 'تحويل البيانات إلى رؤى عملية',
+        'role': 'مطور لوحات تحكم تفاعلية',
+        'tagline': 'تحويل البيانات إلى قرارات ذكية',
         
-        # عني
-        'about_title': 'مرحباً 👋',
+        # القيم الرئيسية
+        'projects': 'مشاريع',
+        'clients': 'عميل',
+        'satisfaction': 'رضا',
+        'experience': 'خبرة',
+        
+        # الأقسام
+        'about': 'عنّي',
+        'skills': 'المهارات',
+        'projects_section': 'المشاريع',
+        'contact': 'تواصل',
+        'services': 'الخدمات',
+        
+        # المحتوى
         'about_text': '''
         مطور متخصص في بناء حلول تحليل البيانات التفاعلية باستخدام Streamlit.
+        أركز على تحويل العمليات اليدوية إلى أنظمة أوتوماتيكية، وتحويل ملفات Excel
+        إلى تطبيقات ويب تفاعلية تسهل اتخاذ القرارات.
         
-        **أركز على:**
-        • تطوير لوحات تحكم احترافية للمبيعات والتجارة الإلكترونية
-        • تحويل ملفات Excel إلى تطبيقات ويب تفاعلية
+        **التخصصات الرئيسية:**
+        • تطوير لوحات تحكم للمبيعات والتجارة الإلكترونية
         • أتمتة العمليات التجارية وتحليل البيانات
-        • تصميم واجهات عربية سلسة وسهلة الاستخدام
+        • تحويل ملفات Excel إلى تطبيقات ويب
+        • تصميم واجهات عربية احترافية
         ''',
         
-        # المهارات
-        'skills_title': 'المهارات التقنية',
-        'skills_subtitle': 'أدوات وخبرات متخصصة',
-        
         # المشاريع
-        'projects_title': 'المشاريع',
-        'project1_title': 'لوحة تحليل المبيعات',
-        'project1_desc': 'لوحة تحكم تفاعلية متكاملة لتحليل بيانات المبيعات والعملاء',
-        'project2_title': 'محول Excel إلى تطبيق ويب',
-        'project2_desc': 'أداة لتحويل ملفات Excel التقليدية إلى تطبيقات ويب تفاعلية',
-        'project3_title': 'نظام إدارة الموارد البشرية',
-        'project3_desc': 'منصة متكاملة لإدارة الموظفين والرواتب والتقييمات',
-        'project4_title': 'منصة التجارة الإلكترونية',
-        'project4_desc': 'لوحة تحكم متقدمة للمتاجر الإلكترونية مع تحليلات متكاملة',
+        'featured_project': 'المشروع المميز',
+        'sales_dashboard': 'لوحة تحليل المبيعات',
+        'sales_desc': 'لوحة تحكم متكاملة لتحليل بيانات المبيعات والعملاء',
         'view_live': 'عرض التطبيق',
         'view_code': 'عرض الكود',
         
+        # المهارات
+        'core_skills': 'المهارات الأساسية',
+        'technologies': 'التقنيات',
+        'methodologies': 'المنهجيات',
+        
         # التواصل
-        'contact_title': 'لنتواصل',
-        'contact_text': 'مستعد لمساعدتك في مشروعك القادم',
+        'get_in_touch': 'تواصل معي',
         'email': 'البريد الإلكتروني',
         'whatsapp': 'واتساب',
         'github': 'GitHub',
         'linkedin': 'LinkedIn',
         'send_message': 'إرسال رسالة',
-        'get_in_touch': 'تواصل معي',
+        'name': 'الاسم',
+        'message': 'الرسالة',
         
-        # الفوتر
-        'footer': '© 2024 أسيل الزواهرة',
-        'rights': 'جميع الحقوق محفوظة'
+        # الخدمات
+        'services_title': 'الخدمات المقدمة',
+        'service1': 'تطوير لوحات تحكم',
+        'service1_desc': 'بناء لوحات تحكم تفاعلية مخصصة',
+        'service2': 'تحويل Excel إلى WebApp',
+        'service2_desc': 'تحويل الملفات التقليدية إلى تطبيقات ويب',
+        'service3': 'أتمتة العمليات',
+        'service3_desc': 'تطوير أنظمة لأتمتة المهام الروتينية',
+        'service4': 'تحليل البيانات',
+        'service4_desc': 'تحليل البيانات واستخراج التقارير',
+        
+        # الأزرار
+        'view_all_projects': 'عرض جميع المشاريع',
+        'download_cv': 'تحميل السيرة الذاتية'
     },
     'en': {
-        # Navigation
-        'nav_home': 'Home',
-        'nav_about': 'About',
-        'nav_skills': 'Skills',
-        'nav_projects': 'Projects',
-        'nav_contact': 'Contact',
-        
         # Header
         'title': 'Aseel Alzawahreh',
-        'subtitle': 'Interactive Dashboard Developer',
-        'tagline': 'Turning Data into Actionable Insights',
+        'role': 'Interactive Dashboard Developer',
+        'tagline': 'Transforming Data into Smart Decisions',
         
-        # About
-        'about_title': 'Hello 👋',
+        # Key Values
+        'projects': 'Projects',
+        'clients': 'Clients',
+        'satisfaction': 'Satisfaction',
+        'experience': 'Experience',
+        
+        # Sections
+        'about': 'About',
+        'skills': 'Skills',
+        'projects_section': 'Projects',
+        'contact': 'Contact',
+        'services': 'Services',
+        
+        # Content
         'about_text': '''
         A developer specializing in building interactive data analysis solutions using Streamlit.
+        I focus on transforming manual processes into automated systems, and converting Excel
+        files into interactive web applications that facilitate decision-making.
         
-        **I focus on:**
-        • Developing professional dashboards for sales and e-commerce
-        • Converting Excel files into interactive web applications
+        **Main Specializations:**
+        • Developing dashboards for sales and e-commerce
         • Business process automation and data analysis
-        • Designing smooth, user-friendly Arabic interfaces
+        • Converting Excel files to web applications
+        • Professional Arabic interface design
         ''',
         
-        # Skills
-        'skills_title': 'Technical Skills',
-        'skills_subtitle': 'Specialized Tools & Expertise',
-        
         # Projects
-        'projects_title': 'Projects',
-        'project1_title': 'Sales Analysis Dashboard',
-        'project1_desc': 'Comprehensive interactive dashboard for sales and customer data analysis',
-        'project2_title': 'Excel to Web App Converter',
-        'project2_desc': 'Tool to convert traditional Excel files into interactive web applications',
-        'project3_title': 'HR Management System',
-        'project3_desc': 'Integrated platform for employee, payroll, and performance management',
-        'project4_title': 'E-commerce Platform',
-        'project4_desc': 'Advanced dashboard for online stores with comprehensive analytics',
+        'featured_project': 'Featured Project',
+        'sales_dashboard': 'Sales Analysis Dashboard',
+        'sales_desc': 'Comprehensive dashboard for analyzing sales and customer data',
         'view_live': 'View App',
         'view_code': 'View Code',
         
+        # Skills
+        'core_skills': 'Core Skills',
+        'technologies': 'Technologies',
+        'methodologies': 'Methodologies',
+        
         # Contact
-        'contact_title': 'Get in Touch',
-        'contact_text': 'Ready to help with your next project',
+        'get_in_touch': 'Get in Touch',
         'email': 'Email',
         'whatsapp': 'WhatsApp',
         'github': 'GitHub',
         'linkedin': 'LinkedIn',
         'send_message': 'Send Message',
-        'get_in_touch': 'Contact Me',
+        'name': 'Name',
+        'message': 'Message',
         
-        # Footer
-        'footer': '© 2024 Aseel Alzawahreh',
-        'rights': 'All rights reserved'
+        # Services
+        'services_title': 'Services Offered',
+        'service1': 'Dashboard Development',
+        'service1_desc': 'Building customized interactive dashboards',
+        'service2': 'Excel to WebApp Conversion',
+        'service2_desc': 'Converting traditional files into web applications',
+        'service3': 'Process Automation',
+        'service3_desc': 'Developing systems to automate routine tasks',
+        'service4': 'Data Analysis',
+        'service4_desc': 'Data analysis and report extraction',
+        
+        # Buttons
+        'view_all_projects': 'View All Projects',
+        'download_cv': 'Download CV'
     }
 }
 
-# CSS متقدم مع ثيمين
-def get_css(theme):
-    if theme == 'dark':
-        return """
-        <style>
-        /* الثيم الداكن */
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --border: #334155;
-            --border-light: #475569;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            --radius: 12px;
-        }
-        </style>
-        """
-    else:
-        return """
-        <style>
-        /* الثيم الفاتح */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --radius: 12px;
-        }
-        </style>
-        """
+# ============ أنظمة الألوان للثيم ============
+THEMES = {
+    'light': {
+        'primary': '#2563eb',
+        'primary_hover': '#1d4ed8',
+        'bg_primary': '#ffffff',
+        'bg_secondary': '#f8fafc',
+        'bg_card': '#ffffff',
+        'text_primary': '#1e293b',
+        'text_secondary': '#475569',
+        'text_muted': '#64748b',
+        'border': '#e2e8f0',
+        'border_light': '#f1f5f9',
+        'shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+    },
+    'dark': {
+        'primary': '#3b82f6',
+        'primary_hover': '#2563eb',
+        'bg_primary': '#0f172a',
+        'bg_secondary': '#1e293b',
+        'bg_card': '#1e293b',
+        'text_primary': '#f1f5f9',
+        'text_secondary': '#cbd5e1',
+        'text_muted': '#94a3b8',
+        'border': '#334155',
+        'border_light': '#475569',
+        'shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+    }
+}
 
-# تطبيق CSS العام
-def apply_global_css():
-    st.markdown("""
+# ============ تطبيق الثيم ============
+def apply_theme():
+    theme = THEMES[st.session_state.theme]
+    
+    css = f"""
     <style>
-    /* تطبيق متغيرات CSS */
-    .stApp {
+    :root {{
+        --primary: {theme['primary']};
+        --primary-hover: {theme['primary_hover']};
+        --bg-primary: {theme['bg_primary']};
+        --bg-secondary: {theme['bg_secondary']};
+        --bg-card: {theme['bg_card']};
+        --text-primary: {theme['text_primary']};
+        --text-secondary: {theme['text_secondary']};
+        --text-muted: {theme['text_muted']};
+        --border: {theme['border']};
+        --border-light: {theme['border_light']};
+        --shadow: {theme['shadow']};
+    }}
+    
+    .stApp {{
         background-color: var(--bg-primary);
         color: var(--text-primary);
         transition: all 0.3s ease;
-    }
-    
-    /* تخصيص النصوص */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--text-primary) !important;
-        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-    
-    p, span, div {
-        color: var(--text-secondary);
-    }
-    
-    /* إزالة الهوامش الزائدة */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-    }
+    }}
     
     /* تصميم البطاقات */
-    .custom-card {
+    .custom-card {{
         background: var(--bg-card);
         border: 1px solid var(--border);
-        border-radius: var(--radius);
+        border-radius: 12px;
         padding: 1.5rem;
         box-shadow: var(--shadow);
         transition: all 0.3s ease;
         height: 100%;
-    }
+    }}
     
-    .custom-card:hover {
+    .custom-card:hover {{
         transform: translateY(-4px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
+    }}
+    
+    /* شريط المهارات */
+    .skill-meter {{
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
+    }}
+    
+    .skill-fill {{
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+        border-radius: 4px;
+    }}
     
     /* تخصيص الأزرار */
-    .stButton > button {
-        background-color: var(--accent);
+    .stButton > button {{
+        background-color: var(--primary);
         color: white;
         border: none;
         border-radius: 8px;
         padding: 0.75rem 1.5rem;
         font-weight: 500;
         transition: all 0.3s ease;
-    }
+    }}
     
-    .stButton > button:hover {
-        background-color: var(--accent-hover);
+    .stButton > button:hover {{
+        background-color: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }}
     
-    /* تخصيص حقول الإدخال */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        color: var(--text-primary);
-        border-radius: 8px;
-    }
-    
-    /* تخصيص التبويبات */
-    .stTabs [data-baseweb="tab-list"] {
+    /* تحسين التبويبات */
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
         border-bottom: 1px solid var(--border);
-    }
+    }}
     
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"] {{
         background: transparent;
         border-radius: 8px 8px 0 0;
         padding: 10px 20px;
@@ -261,479 +275,289 @@ def apply_global_css():
         font-weight: 500;
         border: 1px solid transparent;
         transition: all 0.3s ease;
-    }
+    }}
     
-    .stTabs [data-baseweb="tab"]:hover {
-        background: var(--bg-secondary);
-        color: var(--accent);
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: var(--accent) !important;
+    .stTabs [aria-selected="true"] {{
+        background: var(--primary) !important;
         color: white !important;
-        border-color: var(--accent);
-    }
+        border-color: var(--primary);
+    }}
     
-    /* شريط التقدم */
-    .skill-progress {
-        height: 8px;
-        background: var(--border);
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 8px 0;
-    }
+    /* تحسينات النصوص */
+    h1, h2, h3, h4 {{
+        color: var(--text-primary) !important;
+    }}
     
-    .skill-progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-hover));
-        border-radius: 4px;
-        transition: width 1s ease-in-out;
-    }
-    
-    /* تحسينات للهواتف */
-    @media (max-width: 768px) {
-        .block-container {
-            padding: 1rem;
-        }
-        
-        h1 {
-            font-size: 2rem;
-        }
-        
-        h2 {
-            font-size: 1.5rem;
-        }
-    }
-    
+    p {{
+        color: var(--text-secondary);
+    }}
     </style>
-    """, unsafe_allow_html=True)
-
-# دالة لتحميل الصورة الشخصية من الرابط
-def load_profile_image():
-    try:
-        # رابط الصورة الشخصية من Google Drive
-        # يمكن تغيير هذا الرابط حسب الصورة التي تريدها
-        profile_url = "https://drive.google.com/uc?id=1L8Kk0ylfqWmD75TgpR_n1PtRVO9wVpb3"
-        
-        response = requests.get(profile_url)
-        if response.status_code == 200:
-            image = Image.open(io.BytesIO(response.content))
-            return image
-    except:
-        pass
+    """
     
-    # إذا فشل التحميل، استخدم صورة افتراضية
-    return None
+    st.markdown(css, unsafe_allow_html=True)
 
-# شريط التحكم العلوي
-def render_top_bar():
-    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-    
-    with col1:
-        pass  # سيتم ملؤه بالمحتوى
+# ============ شريط التحكم العلوي ============
+def render_control_bar():
+    col1, col2, col3 = st.columns([6, 1, 1])
     
     with col2:
-        if st.button("عربي" if st.session_state.language == 'en' else "English", 
-                    use_container_width=True):
+        if st.button("عربي" if st.session_state.language == 'en' else "English"):
             st.session_state.language = 'ar' if st.session_state.language == 'en' else 'en'
             st.rerun()
     
     with col3:
         theme_icon = "🌙" if st.session_state.theme == 'light' else "☀️"
-        if st.button(theme_icon, use_container_width=True):
+        if st.button(theme_icon):
             st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
             st.rerun()
     
     return col1
 
-# الهيدر الرئيسي مع الصورة
+# ============ الهيدر الرئيسي ============
 def render_header():
-    lang = st.session_state.language
-    c = content[lang]
+    c = CONTENT[st.session_state.language]
     
-    # تحميل الصورة الشخصية
-    profile_image = load_profile_image()
+    st.markdown(f"# {c['title']}")
+    st.markdown(f"### {c['role']}")
+    st.markdown(f"*{c['tagline']}*")
     
-    col1, col2 = st.columns([3, 2], vertical_alignment="center")
+    # المقاييس الرئيسية
+    st.markdown("---")
     
-    with col1:
-        st.markdown(f"# {c['title']}")
-        st.markdown(f"## {c['subtitle']}")
-        st.markdown(f"*{c['tagline']}*")
-        
-        # فجوة
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        
-        # روابط سريعة
-        cols = st.columns(4)
-        with cols[0]:
-            st.markdown(f"**[👤 {c['nav_about']}](#about)**", unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown(f"**[💪 {c['nav_skills']}](#skills)**", unsafe_allow_html=True)
-        with cols[2]:
-            st.markdown(f"**[🚀 {c['nav_projects']}](#projects)**", unsafe_allow_html=True)
-        with cols[3]:
-            st.markdown(f"**[📞 {c['nav_contact']}](#contact)**", unsafe_allow_html=True)
+    cols = st.columns(4)
+    metrics = [
+        ("🚀", c['projects'], "15+"),
+        ("👥", c['clients'], "12+"),
+        ("⭐", c['satisfaction'], "100%"),
+        ("📅", c['experience'], "2+ Years")
+    ]
     
-    with col2:
-        if profile_image:
-            st.image(profile_image, width=200, use_column_width=False, 
-                    caption=c['title'] if lang == 'ar' else "Aseel Alzawahreh")
-        else:
-            # صورة افتراضية جميلة
+    for idx, (icon, label, value) in enumerate(metrics):
+        with cols[idx]:
             st.markdown(f"""
-            <div style='text-align: center;'>
-                <div style='
-                    width: 200px;
-                    height: 200px;
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    border-radius: 50%;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-size: 4rem;
-                    font-weight: bold;
-                    border: 4px solid var(--accent);
-                    box-shadow: var(--shadow);
-                '>
-                    A
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">{icon}</div>
+                <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">
+                    {value}
                 </div>
-                <p style='margin-top: 1rem; color: var(--text-secondary);'>
-                    {c['title']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-
-# قسم عني
-def render_about():
-    lang = st.session_state.language
-    c = content[lang]
-    
-    st.markdown(f"<h2 id='about'>👤 {c['about_title']}</h2>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns([3, 2])
-    
-    with col1:
-        st.markdown(c['about_text'])
-        
-        # معلومات مختصرة
-        st.markdown("---")
-        cols = st.columns(4)
-        metrics = [
-            ("🎯", "المشاريع", "Projects", "15+"),
-            ("🚀", "التقنيات", "Technologies", "8+"),
-            ("💼", "العملاء", "Clients", "12+"),
-            ("📈", "الرضا", "Satisfaction", "100%")
-        ]
-        
-        for idx, (icon, ar_text, en_text, value) in enumerate(metrics):
-            with cols[idx]:
-                text = ar_text if lang == 'ar' else en_text
-                st.markdown(f"""
-                <div style='text-align: center; padding: 1rem;'>
-                    <div style='font-size: 2rem; margin-bottom: 0.5rem;'>{icon}</div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: var(--accent);'>
-                        {value}
-                    </div>
-                    <div style='color: var(--text-secondary); font-size: 0.9rem;'>
-                        {text}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    with col2:
-        # مهارات سريعة
-        st.markdown(f"### 🛠️ {c['skills_subtitle'] if lang == 'ar' else 'Quick Skills'}")
-        
-        quick_skills = [
-            ("🎨", "Streamlit Development", "تطوير Streamlit", 95),
-            ("🐍", "Python Programming", "برمجة Python", 92),
-            ("📊", "Data Analysis", "تحليل البيانات", 90),
-            ("🔄", "Excel Automation", "أتمتة Excel", 88),
-            ("🌐", "Web Applications", "تطبيقات ويب", 87),
-            ("🎯", "Arabic UI/UX", "واجهات عربية", 90)
-        ]
-        
-        for icon, en_skill, ar_skill, level in quick_skills:
-            skill_text = ar_skill if lang == 'ar' else en_skill
-            st.markdown(f"""
-            <div style='margin: 1rem 0;'>
-                <div style='display: flex; justify-content: space-between; align-items: center;'>
-                    <div style='display: flex; align-items: center; gap: 10px;'>
-                        <span style='font-size: 1.2rem;'>{icon}</span>
-                        <span style='font-weight: 500;'>{skill_text}</span>
-                    </div>
-                    <span style='color: var(--accent); font-weight: bold;'>{level}%</span>
-                </div>
-                <div class='skill-progress'>
-                    <div class='skill-progress-bar' style='width: {level}%;'></div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                    {label}
                 </div>
             </div>
             """, unsafe_allow_html=True)
+    
+    st.markdown("---")
 
-# عرض المهارات بشكل مبتكر
+# ============ نظام المهارات المنظم ============
 def render_skills():
-    lang = st.session_state.language
-    c = content[lang]
+    c = CONTENT[st.session_state.language]
     
-    st.markdown(f"<h2 id='skills'>💪 {c['skills_title']}</h2>", unsafe_allow_html=True)
+    st.markdown(f"## 💪 {c['core_skills']}")
     
-    # مهارات رئيسية مع أيقونات
-    skills_data = [
+    # مهارات تقنية منظمة حسب الفئات
+    skill_categories = [
         {
-            "icon": "🚀",
-            "category": "تطوير Streamlit" if lang == 'ar' else "Streamlit Development",
-            "skills": ["تطبيقات تفاعلية", "لوحات تحكم", "أتمتة العمليات"] if lang == 'ar' 
-                     else ["Interactive Apps", "Dashboards", "Process Automation"],
-            "color": "#3b82f6"
+            "title": "📊 تحليل البيانات" if st.session_state.language == 'ar' else "📊 Data Analysis",
+            "skills": [
+                {"name": "Pandas", "level": 95, "desc": "تحليل ومعالجة البيانات" if st.session_state.language == 'ar' else "Data analysis and processing"},
+                {"name": "NumPy", "level": 88, "desc": "الحسابات العلمية" if st.session_state.language == 'ar' else "Scientific computing"},
+                {"name": "SQL", "level": 85, "desc": "استعلامات وقواعد بيانات" if st.session_state.language == 'ar' else "Database queries"}
+            ]
         },
         {
-            "icon": "🐍",
-            "category": "برمجة Python" if lang == 'ar' else "Python Programming",
-            "skills": ["تحليل البيانات", "معالجة الملفات", "الخوارزميات"] if lang == 'ar'
-                     else ["Data Analysis", "File Processing", "Algorithms"],
-            "color": "#10b981"
+            "title": "🎨 تطوير Streamlit" if st.session_state.language == 'ar' else "🎨 Streamlit Development",
+            "skills": [
+                {"name": "Streamlit", "level": 96, "desc": "تطبيقات ويب تفاعلية" if st.session_state.language == 'ar' else "Interactive web apps"},
+                {"name": "Plotly", "level": 92, "desc": "تصور البيانات التفاعلي" if st.session_state.language == 'ar' else "Interactive data viz"},
+                {"name": "Altair", "level": 82, "desc": "تصورات إحصائية" if st.session_state.language == 'ar' else "Statistical visualizations"}
+            ]
         },
         {
-            "icon": "📊",
-            "category": "تصور البيانات" if lang == 'ar' else "Data Visualization",
-            "skills": ["Plotly", "مخططات تفاعلية", "تقارير متحركة"] if lang == 'ar'
-                     else ["Plotly", "Interactive Charts", "Animated Reports"],
-            "color": "#8b5cf6"
-        },
-        {
-            "icon": "🔄",
-            "category": "أتمتة Excel" if lang == 'ar' else "Excel Automation",
-            "skills": ["تحويل إلى WebApp", "معالجة تلقائية", "تصدير تقارير"] if lang == 'ar'
-                     else ["WebApp Conversion", "Auto Processing", "Report Export"],
-            "color": "#f59e0b"
-        },
-        {
-            "icon": "🌐",
-            "category": "تطوير الويب" if lang == 'ar' else "Web Development",
-            "skills": ["واجهات عربية", "تصميم متجاوب", "أداء عالي"] if lang == 'ar'
-                     else ["Arabic UI", "Responsive Design", "High Performance"],
-            "color": "#ef4444"
-        },
-        {
-            "icon": "🎯",
-            "category": "حلول الأعمال" if lang == 'ar' else "Business Solutions",
-            "skills": ["تحليل المبيعات", "إدارة العملاء", "تقارير أداء"] if lang == 'ar'
-                     else ["Sales Analysis", "Customer Management", "Performance Reports"],
-            "color": "#06b6d4"
+            "title": "🔄 أتمتة العمليات" if st.session_state.language == 'ar' else "🔄 Process Automation",
+            "skills": [
+                {"name": "Python", "level": 94, "desc": "برمجة وأتمتة" if st.session_state.language == 'ar' else "Programming & automation"},
+                {"name": "OpenPyXL", "level": 90, "desc": "أتمتة ملفات Excel" if st.session_state.language == 'ar' else "Excel automation"},
+                {"name": "APScheduler", "level": 80, "desc": "جدولة المهام" if st.session_state.language == 'ar' else "Task scheduling"}
+            ]
         }
     ]
     
     # عرض المهارات في شبكة
     cols = st.columns(3)
     
-    for idx, skill in enumerate(skills_data):
+    for idx, category in enumerate(skill_categories):
         with cols[idx % 3]:
             st.markdown(f"""
-            <div class='custom-card'>
-                <div style='
-                    width: 50px;
-                    height: 50px;
-                    background: {skill['color']}20;
-                    border: 2px solid {skill['color']};
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 1.5rem;
-                    margin-bottom: 1rem;
-                    color: {skill['color']};
-                '>
-                    {skill['icon']}
-                </div>
-                
-                <h4 style='margin-bottom: 1rem; color: var(--text-primary);'>
-                    {skill['category']}
+            <div class="custom-card">
+                <h4 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+                    {category['title']}
                 </h4>
-                
-                <div style='margin-top: 1rem;'>
             """, unsafe_allow_html=True)
             
-            for item in skill['skills']:
+            for skill in category['skills']:
                 st.markdown(f"""
-                <div style='
-                    display: inline-block;
-                    background: var(--bg-secondary);
-                    color: var(--text-secondary);
-                    padding: 0.4rem 0.8rem;
-                    border-radius: 20px;
-                    margin: 0.2rem;
-                    font-size: 0.85rem;
-                    border: 1px solid var(--border);
-                '>
-                    • {item}
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--text-primary);">
+                            {skill['name']}
+                        </span>
+                        <span style="color: var(--primary); font-weight: bold;">
+                            {skill['level']}%
+                        </span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 4px 0;">
+                        {skill['desc']}
+                    </p>
+                    <div class="skill-meter">
+                        <div class="skill-fill" style="width: {skill['level']}%;"></div>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            st.markdown("</div></div>", unsafe_allow_html=True)
-
-# قسم المشاريع
-def render_projects():
-    lang = st.session_state.language
-    c = content[lang]
+            st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown(f"<h2 id='projects'>🚀 {c['projects_title']}</h2>", unsafe_allow_html=True)
+    # مهارات إضافية
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # مشروع رئيسي (حقيقي)
-    st.markdown(f"""
-    <div class='custom-card'>
-        <div style='
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        '>
-            <div>
-                <h3 style='color: var(--accent); margin-bottom: 0.5rem;'>📊 {c['project1_title']}</h3>
-                <p style='color: var(--text-secondary); line-height: 1.6;'>
-                    {c['project1_desc']}
-                </p>
-            </div>
-            
-            <div style='display: flex; gap: 1rem; flex-wrap: wrap;'>
-                <a href='https://salesdashboards.streamlit.app/' target='_blank'
-                   style='
-                        background: var(--accent);
-                        color: white;
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 8px;
-                        text-decoration: none;
-                        font-weight: 500;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                        transition: all 0.3s ease;
-                        border: none;
-                        cursor: pointer;
-                   '
-                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.3)';"
-                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
-                >
-                    🌐 {c['view_live']}
-                </a>
-                
-                <a href='https://github.com/aseeljalal44-stack/Salesdashboard' target='_blank'
-                   style='
-                        background: transparent;
-                        color: var(--text-primary);
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 8px;
-                        text-decoration: none;
-                        font-weight: 500;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                        border: 1px solid var(--border);
-                        transition: all 0.3s ease;
-                        cursor: pointer;
-                   '
-                   onmouseover="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(-2px)';"
-                   onmouseout="this.style.background='transparent'; this.style.transform='translateY(0)';"
-                >
-                    💻 {c['view_code']}
-                </a>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    additional_skills = {
+        "ar": {
+            "methodologies": ["تحليل RFM", "لوحات تحكم KPI", "تصور البيانات الزمنية", "تقارير تفاعلية"],
+            "tools": ["Git", "VS Code", "Docker", "Streamlit Cloud", "Google Sheets API"]
+        },
+        "en": {
+            "methodologies": ["RFM Analysis", "KPI Dashboards", "Time Series Visualization", "Interactive Reports"],
+            "tools": ["Git", "VS Code", "Docker", "Streamlit Cloud", "Google Sheets API"]
+        }
+    }
     
-    # مشاريع أخرى
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    lang_key = st.session_state.language
+    skills = additional_skills[lang_key]
     
-    projects = [
-        (c['project2_title'], c['project2_desc'], "🔄"),
-        (c['project3_title'], c['project3_desc'], "👥"),
-        (c['project4_title'], c['project4_desc'], "🛒")
-    ]
-    
-    cols = st.columns(3)
-    
-    for idx, (title, desc, icon) in enumerate(projects):
-        with cols[idx]:
-            st.markdown(f"""
-            <div class='custom-card'>
-                <div style='
-                    font-size: 2rem;
-                    margin-bottom: 1rem;
-                    color: var(--accent);
-                '>
-                    {icon}
-                </div>
-                
-                <h4 style='color: var(--text-primary); margin-bottom: 0.75rem;'>
-                    {title}
-                </h4>
-                
-                <p style='color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;'>
-                    {desc}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-
-# قسم التواصل
-def render_contact():
-    lang = st.session_state.language
-    c = content[lang]
-    
-    st.markdown(f"<h2 id='contact'>📞 {c['contact_title']}</h2>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown(f"""
-        <div class='custom-card'>
-            <h3 style='color: var(--accent); margin-bottom: 1.5rem;'>📍 {c['get_in_touch']}</h3>
-            
-            <div style='margin-bottom: 1.5rem;'>
-                <div style='
-                    display: flex;
+        st.markdown(f"### 📋 {c['methodologies']}")
+        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+        for method in skills["methodologies"]:
+            st.markdown(f"• {method}")
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"### 🛠️ {c['technologies']}")
+        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+        for tool in skills["tools"]:
+            st.markdown(f"• {tool}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ============ قسم المشاريع ============
+def render_projects():
+    c = CONTENT[st.session_state.language]
+    
+    st.markdown(f"## 🚀 {c['projects_section']}")
+    
+    # المشروع الرئيسي
+    st.markdown(f"### {c['featured_project']}")
+    
+    project_card = f"""
+    <div class="custom-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+                <h3 style="color: var(--primary); margin-bottom: 0.5rem;">📊 {c['sales_dashboard']}</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    {c['sales_desc']}
+                </p>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <a href="https://salesdashboards.streamlit.app/" target="_blank"
+               style="
+                    background: var(--primary);
+                    color: white;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 500;
+                    display: inline-flex;
                     align-items: center;
-                    gap: 10px;
-                    margin-bottom: 0.5rem;
-                '>
-                    <span style='color: var(--accent);'>📧</span>
-                    <strong style='color: var(--text-primary);'>{c['email']}:</strong>
+                    gap: 8px;
+                    transition: all 0.3s ease;
+               "
+               onmouseover="this.style.background='var(--primary-hover)'; this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='var(--primary)'; this.style.transform='translateY(0)';">
+                🌐 {c['view_live']}
+            </a>
+            
+            <a href="https://github.com/aseeljalal44-stack/Salesdashboard" target="_blank"
+               style="
+                    background: transparent;
+                    color: var(--text-primary);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 500;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    border: 1px solid var(--border);
+                    transition: all 0.3s ease;
+               "
+               onmouseover="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='transparent'; this.style.transform='translateY(0)';">
+                💻 {c['view_code']}
+            </a>
+        </div>
+    </div>
+    """
+    
+    st.markdown(project_card, unsafe_allow_html=True)
+
+# ============ قسم التواصل ============
+def render_contact():
+    c = CONTENT[st.session_state.language]
+    
+    st.markdown(f"## 📞 {c['contact']}")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # معلومات الاتصال
+        contact_info = f"""
+        <div class="custom-card">
+            <h3 style="color: var(--primary); margin-bottom: 1.5rem;">📍 {c['get_in_touch']}</h3>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                    <span style="color: var(--primary);">📧</span>
+                    <strong style="color: var(--text-primary);">{c['email']}:</strong>
                 </div>
-                <code style='
+                <code style="
                     background: var(--bg-secondary);
                     padding: 0.5rem 1rem;
                     border-radius: 6px;
                     display: block;
                     color: var(--text-primary);
                     border: 1px solid var(--border);
-                '>
+                ">
                     aseeljalal45@gmail.com
                 </code>
             </div>
             
-            <div style='margin-bottom: 1.5rem;'>
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 0.5rem;
-                '>
-                    <span style='color: #25D366;'>📱</span>
-                    <strong style='color: var(--text-primary);'>{c['whatsapp']}:</strong>
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                    <span style="color: #25D366;">📱</span>
+                    <strong style="color: var(--text-primary);">{c['whatsapp']}:</strong>
                 </div>
-                <div style='
+                <div style="
                     background: var(--bg-secondary);
                     padding: 0.5rem 1rem;
                     border-radius: 6px;
                     border: 1px solid var(--border);
-                '>
+                ">
                     +962 78 509 4075
                 </div>
-                <a href='https://wa.me/962785094075' target='_blank'
-                   style='
+                <a href="https://wa.me/962785094075" target="_blank"
+                   style="
                         display: inline-block;
                         margin-top: 0.5rem;
                         background: #25D366;
@@ -742,121 +566,143 @@ def render_contact():
                         border-radius: 6px;
                         text-decoration: none;
                         font-weight: 500;
-                        transition: all 0.3s ease;
-                   '
-                   onmouseover="this.style.transform='translateY(-2px)';"
-                   onmouseout="this.style.transform='translateY(0)';"
-                >
+                   ">
                     📲 إرسال رسالة
                 </a>
             </div>
             
-            <div style='margin-bottom: 1rem;'>
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 0.5rem;
-                '>
-                    <span style='color: #0077b5;'>💼</span>
-                    <strong style='color: var(--text-primary);'>{c['linkedin']}:</strong>
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                    <span style="color: #0077b5;">💼</span>
+                    <strong style="color: var(--text-primary);">{c['linkedin']}:</strong>
                 </div>
-                <a href='https://linkedin.com' target='_blank' 
-                   style='color: var(--accent); text-decoration: none;'>
+                <a href="https://linkedin.com" target="_blank" 
+                   style="color: var(--primary); text-decoration: none;">
                     linkedin.com/in/aseel-alzawahreh
                 </a>
             </div>
             
             <div>
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 0.5rem;
-                '>
-                    <span style='color: #333;'>💻</span>
-                    <strong style='color: var(--text-primary);'>{c['github']}:</strong>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                    <span style="color: #333;">💻</span>
+                    <strong style="color: var(--text-primary);">{c['github']}:</strong>
                 </div>
-                <a href='https://github.com/aseeljalal44-stack' target='_blank'
-                   style='color: var(--accent); text-decoration: none;'>
+                <a href="https://github.com/aseeljalal44-stack" target="_blank"
+                   style="color: var(--primary); text-decoration: none;">
                     github.com/aseeljalal44-stack
                 </a>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """
+        
+        st.markdown(contact_info, unsafe_allow_html=True)
     
     with col2:
+        # نموذج الاتصال
         with st.form("contact_form"):
             st.markdown(f"#### ✉️ {c['send_message']}")
             
-            name = st.text_input("الاسم" if lang == 'ar' else "Name")
-            email = st.text_input("البريد الإلكتروني" if lang == 'ar' else "Email")
-            message = st.text_area("الرسالة" if lang == 'ar' else "Message", height=150)
+            name = st.text_input(c['name'])
+            email = st.text_input(c['email'])
+            message = st.text_area(c['message'], height=120)
             
-            col_btn1, col_btn2 = st.columns([1, 3])
-            with col_btn1:
-                submitted = st.form_submit_button(c['send_message'], use_container_width=True)
+            submitted = st.form_submit_button(c['send_message'])
             
             if submitted:
                 if name and email and message:
-                    st.success("✅ تم إرسال رسالتك بنجاح!" if lang == 'ar' else "✅ Message sent successfully!")
+                    st.success("✅ تم إرسال رسالتك بنجاح!" if st.session_state.language == 'ar' else "✅ Message sent successfully!")
                 else:
-                    st.warning("⚠️ يرجى ملء جميع الحقول" if lang == 'ar' else "⚠️ Please fill all fields")
+                    st.warning("⚠️ يرجى ملء جميع الحقول" if st.session_state.language == 'ar' else "⚠️ Please fill all fields")
 
-# الفوتر
-def render_footer():
-    lang = st.session_state.language
-    c = content[lang]
-    
-    st.markdown("---")
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown(f"""
-        <div style='text-align: center; padding: 2rem 0; color: var(--text-muted);'>
-            <p style='font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;'>
-                {c['footer']}
-            </p>
-            <p style='font-size: 0.9rem;'>
-                {c['rights']} • Built with ❤️ using Streamlit
-            </p>
-            <p style='font-size: 0.8rem; margin-top: 1rem; opacity: 0.7;'>
-                aseeljalal45@gmail.com • +962 78 509 4075
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# التطبيق الرئيسي
+# ============ التطبيق الرئيسي ============
 def main():
-    # تطبيق CSS
-    st.markdown(get_css(st.session_state.theme), unsafe_allow_html=True)
-    apply_global_css()
+    # تطبيق الثيم
+    apply_theme()
     
-    # شريط التحكم العلوي
-    render_top_bar()
+    # شريط التحكم
+    render_control_bar()
     
     # المحتوى الرئيسي
+    c = CONTENT[st.session_state.language]
+    
+    # الهيدر
     render_header()
     
-    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+    # تبويبات للمحتوى
+    tab1, tab2, tab3, tab4 = st.tabs([
+        f"👤 {c['about']}",
+        f"💪 {c['skills']}",
+        f"🚀 {c['projects_section']}",
+        f"📞 {c['contact']}"
+    ])
     
-    render_about()
+    with tab1:
+        # قسم عني
+        st.markdown(c['about_text'])
+        
+        # خدمات
+        st.markdown(f"### 🛠️ {c['services_title']}")
+        
+        services = [
+            (c['service1'], c['service1_desc'], "📊"),
+            (c['service2'], c['service2_desc'], "🔄"),
+            (c['service3'], c['service3_desc'], "⚡"),
+            (c['service4'], c['service4_desc'], "📈")
+        ]
+        
+        cols = st.columns(2)
+        
+        for idx, (title, desc, icon) in enumerate(services):
+            with cols[idx % 2]:
+                st.markdown(f"""
+                <div class="custom-card">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                        {icon}
+                    </div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">
+                        {title}
+                    </h4>
+                    <p style="color: var(--text-secondary);">
+                        {desc}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
     
-    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+    with tab2:
+        # قسم المهارات
+        render_skills()
     
-    render_skills()
+    with tab3:
+        # قسم المشاريع
+        render_projects()
+        
+        # مشاريع أخرى
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button(c['view_all_projects'], type="secondary"):
+            st.info("جميع المشاريع متاحة على GitHub: github.com/aseeljalal44-stack" 
+                   if st.session_state.language == 'ar' 
+                   else "All projects available on GitHub: github.com/aseeljalal44-stack")
     
-    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
-    
-    render_projects()
-    
-    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
-    
-    render_contact()
+    with tab4:
+        # قسم التواصل
+        render_contact()
     
     # الفوتر
-    render_footer()
+    st.markdown("---")
+    
+    footer_text = f"""
+    <div style="text-align: center; padding: 2rem 0; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;">
+            © 2024 {c['title']}
+        </p>
+        <p style="font-size: 0.9rem;">
+            Built with ❤️ using Streamlit • {c['email']} • +962 78 509 4075
+        </p>
+    </div>
+    """
+    
+    st.markdown(footer_text, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
