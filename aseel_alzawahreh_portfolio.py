@@ -1,341 +1,375 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from PIL import Image
-import io
 import base64
+from pathlib import Path
 
 # إعدادات الصفحة
 st.set_page_config(
     page_title="Aseel Alzawahreh | Portfolio",
     page_icon="🚀",
-    layout="wide"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# إدارة اللغة في حالة الجلسة
+# إدارة الحالة
 if 'language' not in st.session_state:
     st.session_state.language = 'ar'
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
 
 # بيانات ثنائية اللغة
-translations = {
+content = {
     'ar': {
-        'title': 'أسيل الزواهرة | مطور لوحات تحكم تفاعلية',
-        'hero_title': 'أسيل الزواهرة',
-        'hero_subtitle': 'مطور لوحات تحكم تفاعلية | أتمتة العمليات',
-        'about': 'عنّي',
-        'about_content': '''
-        مطور متخصص في تحويل البيانات التقليدية إلى تطبيقات ويب تفاعلية باستخدام Streamlit و Python.
+        # التنقل
+        'nav_home': 'الرئيسية',
+        'nav_about': 'عنّي',
+        'nav_skills': 'المهارات',
+        'nav_projects': 'المشاريع',
+        'nav_contact': 'تواصل',
         
-        **تخصصاتي:**
+        # الهيدر
+        'title': 'أسيل الزواهرة',
+        'subtitle': 'مطور لوحات تحكم تفاعلية',
+        'tagline': 'تحويل البيانات إلى رؤى، والأفكار إلى تطبيقات',
+        
+        # عني
+        'about_title': 'مرحباً، أنا أسيل 👋',
+        'about_text': '''
+        مطور متخصص في بناء لوحات التحكم التفاعلية وتطبيقات تحليل البيانات.
+        
+        **أعمل على:**
         • تطوير لوحات تحكم للمبيعات والتجارة الإلكترونية
-        • تحويل ملفات Excel إلى تطبيقات ويب تفاعلية
+        • تحويل ملفات Excel إلى تطبيقات ويب
         • أتمتة العمليات التجارية
         • تحليل البيانات وإعداد التقارير
         
-        **شغفي:** بناء حلول تقنية تلبي احتياجات السوق العربي وتواكب التحول الرقمي.
+        **التقنيات الرئيسية:** Streamlit, Python, Pandas, Plotly
         ''',
-        'skills': 'المهارات',
-        'projects': 'المشاريع',
-        'contact': 'التواصل',
-        'view_demo': 'عرض تجريبي',
+        
+        # المهارات
+        'skills_title': 'مهاراتي التقنية',
+        'skill1': 'Streamlit',
+        'skill1_desc': 'تطوير تطبيقات ويب تفاعلية',
+        'skill2': 'Python',
+        'skill2_desc': 'برمجة وتحليل البيانات',
+        'skill3': 'Pandas',
+        'skill3_desc': 'معالجة وتحليل البيانات',
+        'skill4': 'Plotly',
+        'skill4_desc': 'تصور البيانات التفاعلي',
+        'skill5': 'Excel Automation',
+        'skill5_desc': 'أتمتة ملفات Excel',
+        'skill6': 'Arabic UI/UX',
+        'skill6_desc': 'تصميم واجهات عربية',
+        
+        # المشاريع
+        'projects_title': 'مشاريعي',
+        'project1_title': 'لوحة تحليل المبيعات',
+        'project1_desc': 'لوحة تحكم تفاعلية لتحليل بيانات المبيعات والعملاء',
+        'project2_title': 'محول Excel إلى WebApp',
+        'project2_desc': 'أداة لتحويل ملفات Excel إلى تطبيقات ويب',
+        'project3_title': 'نظام الموارد البشرية',
+        'project3_desc': 'منصة لإدارة الموظفين والرواتب',
+        'project4_title': 'منصة التجارة الإلكترونية',
+        'project4_desc': 'لوحة تحكم متقدمة للمتاجر الإلكترونية',
+        'view_live': 'عرض التطبيق',
         'view_code': 'عرض الكود',
-        'download_cv': 'تحميل السيرة الذاتية',
-        'get_in_touch': 'تواصل معي',
+        
+        # التواصل
+        'contact_title': 'لنعمل معاً',
+        'contact_text': 'مستعد لمشروعك القادم؟ تواصل معي',
         'email': 'البريد الإلكتروني',
         'whatsapp': 'واتساب',
-        'linkedin': 'لينكدإن',
-        'github': 'جيت هاب',
-        'live_project': 'المشروع الحي',
-        'sales_dashboard': 'لوحة تحليل المبيعات',
-        'dashboard_desc': 'لوحة تحكم تفاعلية لتحليل بيانات المبيعات والعملاء',
-        'excel_converter': 'محول Excel إلى WebApp',
-        'excel_desc': 'أداة لتحويل ملفات Excel إلى تطبيقات ويب تفاعلية',
-        'hr_system': 'نظام الموارد البشرية',
-        'hr_desc': 'منصة متكاملة لإدارة الموظفين والرواتب',
-        'ecommerce': 'منصة التجارة الإلكترونية',
-        'ecommerce_desc': 'لوحة تحكم متقدمة لمتجر إلكتروني'
+        'github': 'GitHub',
+        'send_message': 'إرسال رسالة',
+        
+        # الفوتر
+        'footer': '© 2024 أسيل الزواهرة. جميع الحقوق محفوظة.'
     },
     'en': {
-        'title': 'Aseel Alzawahreh | Interactive Dashboard Developer',
-        'hero_title': 'Aseel Alzawahreh',
-        'hero_subtitle': 'Interactive Dashboard Developer | Process Automation',
-        'about': 'About Me',
-        'about_content': '''
-        A developer specializing in transforming traditional data into interactive web applications using Streamlit and Python.
+        # Navigation
+        'nav_home': 'Home',
+        'nav_about': 'About',
+        'nav_skills': 'Skills',
+        'nav_projects': 'Projects',
+        'nav_contact': 'Contact',
         
-        **My Specialties:**
+        # Header
+        'title': 'Aseel Alzawahreh',
+        'subtitle': 'Interactive Dashboard Developer',
+        'tagline': 'Turning data into insights, ideas into applications',
+        
+        # About
+        'about_title': 'Hi, I\'m Aseel 👋',
+        'about_text': '''
+        A developer specializing in building interactive dashboards and data analysis applications.
+        
+        **I work on:**
         • Developing dashboards for sales and e-commerce
-        • Converting Excel files into interactive web applications
+        • Converting Excel files to web applications
         • Business process automation
         • Data analysis and reporting
         
-        **My Passion:** Building technical solutions that meet the needs of the Arab market and keep pace with digital transformation.
+        **Main Technologies:** Streamlit, Python, Pandas, Plotly
         ''',
-        'skills': 'Skills',
-        'projects': 'Projects',
-        'contact': 'Contact',
-        'view_demo': 'View Demo',
+        
+        # Skills
+        'skills_title': 'Technical Skills',
+        'skill1': 'Streamlit',
+        'skill1_desc': 'Interactive web applications',
+        'skill2': 'Python',
+        'skill2_desc': 'Programming & data analysis',
+        'skill3': 'Pandas',
+        'skill3_desc': 'Data processing & analysis',
+        'skill4': 'Plotly',
+        'skill4_desc': 'Interactive data visualization',
+        'skill5': 'Excel Automation',
+        'skill5_desc': 'Excel file automation',
+        'skill6': 'Arabic UI/UX',
+        'skill6_desc': 'Arabic interface design',
+        
+        # Projects
+        'projects_title': 'My Projects',
+        'project1_title': 'Sales Analysis Dashboard',
+        'project1_desc': 'Interactive dashboard for sales and customer data analysis',
+        'project2_title': 'Excel to WebApp Converter',
+        'project2_desc': 'Tool to convert Excel files to web applications',
+        'project3_title': 'HR Management System',
+        'project3_desc': 'Platform for employee and payroll management',
+        'project4_title': 'E-commerce Platform',
+        'project4_desc': 'Advanced dashboard for online stores',
+        'view_live': 'View App',
         'view_code': 'View Code',
-        'download_cv': 'Download CV',
-        'get_in_touch': 'Get in Touch',
+        
+        # Contact
+        'contact_title': "Let's Work Together",
+        'contact_text': 'Ready for your next project? Get in touch',
         'email': 'Email',
         'whatsapp': 'WhatsApp',
-        'linkedin': 'LinkedIn',
         'github': 'GitHub',
-        'live_project': 'Live Project',
-        'sales_dashboard': 'Sales Analysis Dashboard',
-        'dashboard_desc': 'Interactive dashboard for analyzing sales and customer data',
-        'excel_converter': 'Excel to WebApp Converter',
-        'excel_desc': 'Tool to convert Excel files into interactive web applications',
-        'hr_system': 'HR Management System',
-        'hr_desc': 'Integrated platform for employee and payroll management',
-        'ecommerce': 'E-commerce Platform',
-        'ecommerce_desc': 'Advanced dashboard for online stores'
+        'send_message': 'Send Message',
+        
+        # Footer
+        'footer': '© 2024 Aseel Alzawahreh. All rights reserved.'
     }
 }
 
-# CSS بسيط
-def local_css():
-    st.markdown("""
-    <style>
-    /* تصميم نظيف */
-    .main {
-        padding: 0 1rem;
-    }
-    
-    /* تباين واضح للنص */
-    .stApp {
-        background-color: #f8f9fa;
-    }
-    
-    /* إزالة الهوامش الزائدة */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* تخصيص الأزرار */
-    .stButton > button {
-        background-color: #2c3e50;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        font-weight: 500;
-    }
-    
-    .stButton > button:hover {
-        background-color: #1a252f;
-    }
-    
-    /* تخصيص التبويبات */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        padding: 10px 20px;
-    }
-    
-    /* تصميم البطاقات */
-    .project-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #2c3e50;
-    }
-    
-    /* تصميم المهارات */
-    .skill-item {
-        background: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-    }
-    
-    </style>
-    """, unsafe_allow_html=True)
+# CSS ديناميكي للثيم
+def get_css(theme):
+    if theme == 'dark':
+        return """
+        <style>
+        /* الثيم الداكن */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --accent: #3b82f6;
+            --border: #334155;
+        }
+        
+        .stApp {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--text-primary);
+        }
+        
+        p {
+            color: var(--text-secondary);
+        }
+        </style>
+        """
+    else:
+        return """
+        <style>
+        /* الثيم الفاتح */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #2563eb;
+            --border: #e2e8f0;
+        }
+        
+        .stApp {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--text-primary);
+        }
+        
+        p {
+            color: var(--text-secondary);
+        }
+        </style>
+        """
 
-local_css()
-
-# دالة لتحميل الصورة الشخصية
-def load_profile_image():
+# دالة لتحميل الصورة
+def load_image(image_path):
     try:
-        # جرب تحميل الصورة الشخصية
-        image = Image.open("profile.jpg")
-        return image
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
     except:
-        try:
-            # جرب تحميل من مجلد assets
-            image = Image.open("assets/profile.jpg")
-            return image
-        except:
-            # أنشئ صورة افتراضية
+        return None
+
+# شريط التحكم العلوي
+def render_controls():
+    col1, col2, col3, col4 = st.columns([6, 1, 1, 1])
+    
+    with col2:
+        # زر تبديل اللغة
+        if st.button("عربى" if st.session_state.language == 'en' else "EN", 
+                    help="تبديل اللغة"):
+            st.session_state.language = 'ar' if st.session_state.language == 'en' else 'en'
+            st.rerun()
+    
+    with col3:
+        # زر تبديل الثيم
+        theme_icon = "🌙" if st.session_state.theme == 'light' else "☀️"
+        if st.button(theme_icon, help="تبديل الثيم"):
+            st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+            st.rerun()
+    
+    return col1
+
+# الهيدر الرئيسي
+def render_header(lang):
+    c = content[lang]
+    
+    # محاولة تحميل الصورة الشخصية
+    img_b64 = load_image("profile.jpg") or load_image("assets/profile.jpg")
+    
+    col1, col2 = st.columns([2, 1], vertical_alignment="center")
+    
+    with col1:
+        st.title(c['title'])
+        st.markdown(f"### {c['subtitle']}")
+        st.markdown(f"*{c['tagline']}*")
+        
+        # روابط سريعة
+        st.markdown("---")
+        cols = st.columns(4)
+        with cols[0]:
+            st.markdown(f"[🌐 {c['nav_about']}](#about)", unsafe_allow_html=True)
+        with cols[1]:
+            st.markdown(f"[💼 {c['nav_projects']}](#projects)", unsafe_allow_html=True)
+        with cols[2]:
+            st.markdown(f"[📧 {c['nav_contact']}](#contact)", unsafe_allow_html=True)
+        with cols[3]:
+            st.markdown(f"[💻 GitHub](https://github.com/aseeljalal44-stack)")
+    
+    with col2:
+        if img_b64:
+            st.markdown(f"""
+            <div style="text-align: center; margin-top: 1rem;">
+                <img src="data:image/jpeg;base64,{img_b64}" 
+                     style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent);">
+            </div>
+            """, unsafe_allow_html=True)
+        else:
             st.markdown("""
-            <div style='text-align: center; margin: 2rem 0;'>
-                <div style='width: 150px; height: 150px; background: #2c3e50; 
-                            border-radius: 50%; display: inline-flex; 
-                            align-items: center; justify-content: center; 
-                            color: white; font-size: 3rem;'>
+            <div style="text-align: center; margin-top: 1rem;">
+                <div style="width: 150px; height: 150px; border-radius: 50%; 
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            display: inline-flex; align-items: center; 
+                            justify-content: center; color: white; font-size: 3rem;
+                            border: 3px solid var(--accent);">
                     A
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            return None
 
-# شريط جانبي للتحكم
-with st.sidebar:
-    # زر تبديل اللغة
-    if st.button("🇸🇦 العربية" if st.session_state.language == 'en' else "🇺🇸 English"):
-        st.session_state.language = 'ar' if st.session_state.language == 'en' else 'en'
-        st.rerun()
+# قسم عني
+def render_about(lang):
+    c = content[lang]
     
+    st.markdown(f"## 👤 {c['about_title']}")
+    st.markdown(c['about_text'])
+    
+    # معلومات سريعة
     st.markdown("---")
     
-    # القائمة الرئيسية
-    st.markdown("### **📍 التنقل**" if st.session_state.language == 'ar' else "### **📍 Navigation**")
-    
-    # تحميل الصورة الشخصية في الشريط الجانبي
-    profile_img = load_profile_image()
-    if profile_img:
-        st.image(profile_img, width=150)
-    
-    st.markdown("---")
-    
-    # معلومات الاتصال في الشريط الجانبي
-    lang = st.session_state.language
-    st.markdown(f"**📧 {translations[lang]['email']}:**")
-    st.markdown("aseeljalal45@gmail.com")
-    
-    st.markdown(f"**📱 {translations[lang]['whatsapp']}:**")
-    st.markdown("+962785094075")
-    
-    st.markdown("---")
-    
-    # روابط سريعة
-    st.markdown(f"**🔗 {translations[lang]['linkedin']}:**")
-    st.markdown("[linkedin.com/in/aseel-alzawahreh](https://linkedin.com)")
-    
-    st.markdown(f"**💻 {translations[lang]['github']}:**")
-    st.markdown("[github.com/aseeljalal44-stack](https://github.com/aseeljalal44-stack/Salesdashboard)")
-    
-    st.markdown(f"**🚀 {translations[lang]['live_project']}:**")
-    st.markdown("[salesdashboards.streamlit.app](https://salesdashboards.streamlit.app/)")
+    cols = st.columns(4)
+    with cols[0]:
+        st.metric("المشاريع", "15+")
+    with cols[1]:
+        st.metric("العملاء", "12+")
+    with cols[2]:
+        st.metric("الخبرة", "2+ سنة")
+    with cols[3]:
+        st.metric("التقنيات", "8+")
 
-# المحتوى الرئيسي
-lang = st.session_state.language
-t = translations[lang]
-
-# قسم البطل
-col1, col2 = st.columns([3, 1])
-
-with col1:
-    st.title(t['hero_title'])
-    st.markdown(f"### {t['hero_subtitle']}")
+# قسم المهارات
+def render_skills(lang):
+    c = content[lang]
     
-    # أزرار سريعة
-    col_a, col_b, col_c = st.columns(3)
-    with col_a:
-        if st.button(t['view_demo']):
-            st.markdown(f"[{t['sales_dashboard']}](https://salesdashboards.streamlit.app/)")
-    with col_b:
-        if st.button(t['view_code']):
-            st.markdown(f"[GitHub](https://github.com/aseeljalal44-stack/Salesdashboard)")
-    with col_c:
-        if st.button(t['download_cv']):
-            st.info("CV will be available soon")
-
-st.markdown("---")
-
-# تبويبات للمحتوى الرئيسي
-tab1, tab2, tab3, tab4 = st.tabs([
-    f"👤 {t['about']}",
-    f"💪 {t['skills']}",
-    f"🚀 {t['projects']}",
-    f"📞 {t['contact']}"
-])
-
-with tab1:
-    # قسم عني
-    col1, col2 = st.columns([2, 1])
+    st.markdown(f"## 💪 {c['skills_title']}")
     
-    with col1:
-        st.markdown(t['about_content'])
-    
-    with col2:
-        # عرض صورة شخصية كبيرة إذا كانت موجودة
-        if profile_img:
-            st.image(profile_img, use_column_width=True)
-        
-        # مؤشرات سريعة
-        st.markdown("""
-        <div style='background: white; padding: 1.5rem; border-radius: 10px;'>
-            <h4 style='color: #2c3e50;'>📊 إنجازات سريعة</h4>
-            <p>✅ 15+ مشروع مكتمل</p>
-            <p>✅ 8+ مجالات مختلفة</p>
-            <p>✅ 100% رضا عملاء</p>
-            <p>✅ 50+ لوحة تحكم</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-with tab2:
-    # قسم المهارات المبسط
-    st.markdown("### 💻 **المهارات التقنية الأساسية**")
-    
+    # تنظيم المهارات في شبكة
     cols = st.columns(3)
     
     skills = [
-        ("Streamlit", "تطوير تطبيقات ويب تفاعلية", 95),
-        ("Python", "برمجة وتحليل البيانات", 92),
-        ("Pandas", "معالجة وتحليل البيانات", 90),
-        ("Plotly", "تصور البيانات التفاعلي", 88),
-        ("Excel Automation", "أتمتة ملفات Excel", 85),
-        ("Arabic UI/UX", "تصميم واجهات عربية", 90)
-    ] if lang == 'ar' else [
-        ("Streamlit", "Interactive web applications", 95),
-        ("Python", "Programming & data analysis", 92),
-        ("Pandas", "Data processing & analysis", 90),
-        ("Plotly", "Interactive data visualization", 88),
-        ("Excel Automation", "Excel file automation", 85),
-        ("Arabic UI/UX", "Arabic interface design", 90)
+        (c['skill1'], c['skill1_desc'], 95),
+        (c['skill2'], c['skill2_desc'], 92),
+        (c['skill3'], c['skill3_desc'], 90),
+        (c['skill4'], c['skill4_desc'], 88),
+        (c['skill5'], c['skill5_desc'], 85),
+        (c['skill6'], c['skill6_desc'], 90)
     ]
     
     for idx, (skill, desc, level) in enumerate(skills):
         with cols[idx % 3]:
             st.markdown(f"""
-            <div class='skill-item'>
-                <h4>{skill}</h4>
-                <p style='color: #666; font-size: 0.9rem;'>{desc}</p>
-                <div style='background: #e0e0e0; border-radius: 5px; height: 8px; margin: 10px 0;'>
-                    <div style='background: #2c3e50; width: {level}%; height: 100%; border-radius: 5px;'></div>
+            <div class="card" style="padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>{skill}</strong>
+                    <span style="color: var(--accent); font-weight: bold;">{level}%</span>
                 </div>
-                <span style='color: #2c3e50; font-weight: bold;'>{level}%</span>
+                <p style="font-size: 0.9rem; margin: 0.5rem 0;">{desc}</p>
+                <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                    <div style="height: 100%; width: {level}%; background: var(--accent);"></div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-with tab3:
-    # قسم المشاريع
-    st.markdown(f"### 🚀 **{t['projects']}**")
+# قسم المشاريع
+def render_projects(lang):
+    c = content[lang]
     
-    # مشروع لوحة المبيعات (الحقيقي)
+    st.markdown(f"## 🚀 {c['projects_title']}")
+    
+    # مشروع رئيسي (حقيقي)
     st.markdown(f"""
-    <div class='project-card'>
-        <h3>📊 {t['sales_dashboard']}</h3>
-        <p>{t['dashboard_desc']}</p>
+    <div class="card" style="padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+        <h3 style="color: var(--accent); margin-bottom: 0.5rem;">📊 {c['project1_title']}</h3>
+        <p style="margin-bottom: 1rem;">{c['project1_desc']}</p>
         
-        <div style='display: flex; gap: 10px; margin-top: 15px;'>
-            <a href='https://salesdashboards.streamlit.app/' target='_blank' 
-               style='background: #2c3e50; color: white; padding: 8px 16px; 
-                      border-radius: 5px; text-decoration: none;'>
-               🌐 {t['view_demo']}
+        <div style="display: flex; gap: 1rem;">
+            <a href="https://salesdashboards.streamlit.app/" target="_blank"
+               style="background: var(--accent); color: white; padding: 0.5rem 1rem; 
+                      border-radius: 6px; text-decoration: none; font-weight: 500;">
+               🌐 {c['view_live']}
             </a>
-            <a href='https://github.com/aseeljalal44-stack/Salesdashboard' target='_blank'
-               style='background: #333; color: white; padding: 8px 16px; 
-                      border-radius: 5px; text-decoration: none;'>
-               💻 {t['view_code']}
+            <a href="https://github.com/aseeljalal44-stack/Salesdashboard" target="_blank"
+               style="background: var(--bg-secondary); color: var(--text-primary); 
+                      padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; 
+                      font-weight: 500; border: 1px solid var(--border);">
+               💻 {c['view_code']}
             </a>
         </div>
     </div>
@@ -343,81 +377,116 @@ with tab3:
     
     # مشاريع أخرى
     projects = [
-        (t['excel_converter'], t['excel_desc']),
-        (t['hr_system'], t['hr_desc']),
-        (t['ecommerce'], t['ecommerce_desc'])
+        (c['project2_title'], c['project2_desc']),
+        (c['project3_title'], c['project3_desc']),
+        (c['project4_title'], c['project4_desc'])
     ]
     
-    for project_title, project_desc in projects:
-        st.markdown(f"""
-        <div class='project-card'>
-            <h3>✨ {project_title}</h3>
-            <p>{project_desc}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    cols = st.columns(3)
+    for idx, (title, desc) in enumerate(projects):
+        with cols[idx]:
+            st.markdown(f"""
+            <div class="card" style="padding: 1rem; border-radius: 10px; height: 100%;">
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">✨ {title}</h4>
+                <p style="font-size: 0.9rem;">{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-with tab4:
-    # قسم التواصل
-    st.markdown(f"### 📞 **{t['get_in_touch']}**")
+# قسم التواصل
+def render_contact(lang):
+    c = content[lang]
+    
+    st.markdown(f"## 📞 {c['contact_title']}")
+    st.markdown(c['contact_text'])
+    
+    # معلومات الاتصال
+    st.markdown("---")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # نموذج الاتصال
-        st.markdown(f"#### ✉️ {t['get_in_touch']}")
-        
-        with st.form("contact_form"):
-            name = st.text_input("الاسم" if lang == 'ar' else "Name")
-            email = st.text_input("البريد الإلكتروني" if lang == 'ar' else "Email")
-            message = st.text_area("الرسالة" if lang == 'ar' else "Message", height=150)
-            
-            submitted = st.form_submit_button("إرسال" if lang == 'ar' else "Send")
-            
-            if submitted:
-                if name and email and message:
-                    st.success("شكراً! سأتصل بك قريباً." if lang == 'ar' else "Thanks! I'll contact you soon.")
-                else:
-                    st.warning("يرجى ملء جميع الحقول" if lang == 'ar' else "Please fill all fields")
-    
-    with col2:
-        # معلومات الاتصال
         st.markdown(f"""
-        <div style='background: white; padding: 2rem; border-radius: 10px;'>
-            <h4>📍 {t['contact']}</h4>
+        <div class="card" style="padding: 1.5rem; border-radius: 10px;">
+            <h4 style="color: var(--accent); margin-bottom: 1rem;">📬 {c['contact_title']}</h4>
             
-            <div style='margin: 1.5rem 0;'>
-                <p><strong>📧 {t['email']}:</strong></p>
-                <p>aseeljalal45@gmail.com</p>
+            <div style="margin-bottom: 1rem;">
+                <strong>📧 {c['email']}:</strong><br>
+                <code>aseeljalal45@gmail.com</code>
             </div>
             
-            <div style='margin: 1.5rem 0;'>
-                <p><strong>📱 {t['whatsapp']}:</strong></p>
-                <p>+962785094075</p>
-                <a href='https://wa.me/962785094075' target='_blank' 
-                   style='background: #25D366; color: white; padding: 8px 16px; 
-                          border-radius: 5px; text-decoration: none; display: inline-block; margin-top: 5px;'>
-                   📲 ارسل رسالة
+            <div style="margin-bottom: 1rem;">
+                <strong>📱 {c['whatsapp']}:</strong><br>
+                +962 78 509 4075
+            </div>
+            
+            <div>
+                <strong>💻 {c['github']}:</strong><br>
+                <a href="https://github.com/aseeljalal44-stack" target="_blank">
+                    github.com/aseeljalal44-stack
                 </a>
-            </div>
-            
-            <div style='margin: 1.5rem 0;'>
-                <p><strong>💼 {t['linkedin']}:</strong></p>
-                <a href='https://linkedin.com'>linkedin.com/in/aseel-alzawahreh</a>
-            </div>
-            
-            <div style='margin: 1.5rem 0;'>
-                <p><strong>💻 {t['github']}:</strong></p>
-                <a href='https://github.com/aseeljalal44-stack'>github.com/aseeljalal44-stack</a>
             </div>
         </div>
         """, unsafe_allow_html=True)
+    
+    with col2:
+        # نموذج اتصال بسيط
+        with st.form("contact_form"):
+            st.markdown(f"#### ✉️ {c['send_message']}")
+            
+            name = st.text_input("الاسم" if lang == 'ar' else "Name")
+            email = st.text_input("البريد الإلكتروني" if lang == 'ar' else "Email")
+            message = st.text_area("الرسالة" if lang == 'ar' else "Message", height=100)
+            
+            submitted = st.form_submit_button(c['send_message'])
+            
+            if submitted:
+                if name and email and message:
+                    st.success("تم إرسال رسالتك بنجاح!" if lang == 'ar' else "Message sent successfully!")
+                else:
+                    st.warning("يرجى ملء جميع الحقول" if lang == 'ar' else "Please fill all fields")
 
 # الفوتر
-st.markdown("---")
-st.markdown("""
-<div style='text-align: center; color: #666; padding: 2rem 0;'>
-    <p>© 2024 أسيل الزواهرة | Aseel Alzawahreh</p>
-    <p>مطور لوحات تحكم تفاعلية باستخدام Streamlit و Python</p>
-    <p>Interactive Dashboard Developer using Streamlit & Python</p>
-</div>
-""", unsafe_allow_html=True)
+def render_footer(lang):
+    c = content[lang]
+    
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
+        <p>{c['footer']}</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+            Built with ❤️ using Streamlit & Python
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# التطبيق الرئيسي
+def main():
+    # تطبيق CSS
+    st.markdown(get_css(st.session_state.theme), unsafe_allow_html=True)
+    
+    # شريط التحكم
+    render_controls()
+    
+    # المحتوى
+    lang = st.session_state.language
+    c = content[lang]
+    
+    # الهيدر
+    render_header(lang)
+    
+    st.markdown("---")
+    
+    # الأقسام
+    render_about(lang)
+    st.markdown("---")
+    render_skills(lang)
+    st.markdown("---")
+    render_projects(lang)
+    st.markdown("---")
+    render_contact(lang)
+    
+    # الفوتر
+    render_footer(lang)
+
+if __name__ == "__main__":
+    main()
